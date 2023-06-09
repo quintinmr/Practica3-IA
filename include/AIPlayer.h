@@ -71,6 +71,13 @@ class AIPlayer: public Player{
          */
         static double ValoracionTest(const Parchis &estado, int jugador);
 
+        void thinkAleatorio(color &c_piece, int &id_piece, int &dice) const;
+        void thinkAleatorioMasInteligente(color &c_piece, int &id_piece, int &dice) const;
+        void thinkFichaMasAdelantada(color &c_piece, int &id_piece, int &dice) const;
+        void thinkMejorOpcion(color &c_piece, int &id_piece, int &dice) const;
+        double Poda_AlfaBeta(const Parchis &actual, int jugador, int profundidad, int profundidad_max, color &c_piece, int &id_piece, int &dice, double alpha, double beta, double (*heuristic)(const Parchis &, int)) const;
+        static double heuristica1(const Parchis &juego, int jugador);
+        static double heuristica2(const Parchis &juego, int jugador);
         /**
          * @brief Propuesta de declaración de la función poda alfa-beta.
          * La propuesta es solo sugerencia, los parámetros de la declaración podrían variar.
