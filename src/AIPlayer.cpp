@@ -435,40 +435,45 @@ double AIPlayer::heuristica2(const Parchis &juego, int jugador){
 
         // Catigamos en valor a las fichas que estén en casa
         distanciaAuxiliar -= 15000*juego.piecesAtHome(colorinchisYO[i]);
+        int fichascasa = juego.piecesAtGoal(colorinchisYO[i]);
 
-        for (int j = 0; j < num_pieces; j++){
+        // Si solo nos queda una ficha para ganar, vamos a beneficiarla todo lo que podamos.
+        if (fichascasa == 2 and juego.piecesAtHome(colorinchisYO[i]) == 0) distanciaAuxiliar += 18000*juego.piecesAtGoal(colorinchisYO[i]);
+        else{
+            for (int j = 0; j < num_pieces; j++){
 
-            Box casillaYO = juego.getBoard().getPiece(colorinchisYO[i],j).get_box();
-            tuple<color, int> pieza = {casillaYO.col, casillaYO.num};
-            vector<int> dados_especiales = juego.getAvailableSpecialDices(jugador);
+                double d = juego.distanceToGoal(colorinchisYO[i],j);
 
-            // Beneficiamos en valor a las fichas que estén en casillas seguras
-            if (juego.isSafeBox(casillaYO)) distanciaAuxiliar += 8000;
-            // Si el jugador tiene dados especiales. 
-            else if (!dados_especiales.empty()){
+                // Beneficiamos a las fichas que se encuentren en casillas próximas a la meta
+                // Castigamos a aquellas qu se encuentren lejos de la meta.
+                if (d >= 8) distanciaAuxiliar -= 500*d;
+                else distanciaAuxiliar += 15000;
 
-                for (int k = 0; k < dados_especiales.size(); k++){
+                Box casillaYO = juego.getBoard().getPiece(colorinchisYO[i],j).get_box();
+                tuple<color, int> pieza = {casillaYO.col, casillaYO.num};
+                vector<int> dados_especiales = juego.getAvailableSpecialDices(jugador);
 
-                    current_pieces = juego.getAvailablePieces(jugador,dados_especiales[k]);
-                    if (!current_pieces.empty())
+                // Beneficiamos en valor a las fichas que estén en casillas seguras
+                if (juego.isSafeBox(casillaYO)) distanciaAuxiliar += 8000;
+                // Si el jugador tiene dados especiales. 
+                else if (!dados_especiales.empty()){
 
-                        for (int l = 0; l < current_pieces.size(); l++){
+                    for (int k = 0; k < dados_especiales.size(); k++){
 
-                            if (current_pieces[l] == pieza) distanciaAuxiliar += 10000;
-                        }
-                }
+                        current_pieces = juego.getAvailablePieces(jugador,dados_especiales[k]);
+                        if (!current_pieces.empty())
 
-            } 
+                            for (int l = 0; l < current_pieces.size(); l++){
 
-            double d = juego.distanceToGoal(colorinchisYO[i],j);
+                                if (current_pieces[l] == pieza) distanciaAuxiliar += 10000;
+                            }
+                    }
 
-            // Beneficiamos a las fichas que se encuentren en casillas próximas a la meta
-            // Castigamos a aquellas qu se encuentren lejos de la meta.
-            if (d >= 8) distanciaAuxiliar -= 500*d;
-            else distanciaAuxiliar += 15000;
-        
+                } 
+
+            }
         }
-
+        
         distanciaAcumulada += 1000*distanciaAuxiliar;
     }  
 
@@ -478,37 +483,43 @@ double AIPlayer::heuristica2(const Parchis &juego, int jugador){
 
         // Beneficiamos en valor a las fichas que estén en casa
         distanciaAuxiliarAd += 15000*juego.piecesAtHome(colorinchisAdversario[i]);
+        int fichascasa = juego.piecesAtGoal(colorinchisYO[i]);
 
-        for (int j = 0; j < num_pieces; j++){
+        // Si solo le queda una ficha para ganar, vamos a perjudicarlo todo lo que podamos.
+        if (fichascasa == 2) distanciaAuxiliar -= 18000*juego.piecesAtGoal(colorinchisYO[i]);
+        else{
+            for (int j = 0; j < num_pieces; j++){
 
-            Box casillaADV = juego.getBoard().getPiece(colorinchisAdversario[i],j).get_box();
-            tuple<color, int> piezaADV = {casillaADV.col, casillaADV.num};
-            vector<int> dados_especialesADV = juego.getAvailableSpecialDices(adversario);
+                double d = juego.distanceToGoal(colorinchisAdversario[i],j);
 
-            // Perjudicamos en valor a las fichas que estén en casillas seguras
-            if (juego.isSafeBox(casillaADV)) distanciaAuxiliarAd -= 8000;
-            // Si el jugador tiene dados especiales. 
-            else if (!dados_especialesADV.empty()){
+                // Castigamos a las fichas que se encuentren en casillas próximas a la meta
+                // Beneficiamos a aquellas qu se encuentren lejos de la meta.
+                if (d >= 8) distanciaAuxiliar += 500*d;
+                else distanciaAuxiliar -= 15000;
 
-                for (int k = 0; k < dados_especialesADV.size(); k++){
+                Box casillaADV = juego.getBoard().getPiece(colorinchisAdversario[i],j).get_box();
+                tuple<color, int> piezaADV = {casillaADV.col, casillaADV.num};
+                vector<int> dados_especialesADV = juego.getAvailableSpecialDices(adversario);
 
-                    current_pieces = juego.getAvailablePieces(adversario,dados_especialesADV[k]);
-                    if (!current_pieces.empty())
+                // Perjudicamos en valor a las fichas que estén en casillas seguras
+                if (juego.isSafeBox(casillaADV)) distanciaAuxiliarAd -= 8000;
+                // Si el jugador tiene dados especiales. 
+                else if (!dados_especialesADV.empty()){
 
-                        for (int l = 0; l < current_pieces.size(); l++){
+                    for (int k = 0; k < dados_especialesADV.size(); k++){
 
-                            if (current_pieces[l] == piezaADV) distanciaAuxiliarAd -= 10000;
-                        }
-                }
+                        current_pieces = juego.getAvailablePieces(adversario,dados_especialesADV[k]);
+                        if (!current_pieces.empty())
 
-            } 
-            double d = juego.distanceToGoal(colorinchisAdversario[i],j);
+                            for (int l = 0; l < current_pieces.size(); l++){
 
-            // Castigamos a las fichas que se encuentren en casillas próximas a la meta
-            // Beneficiamos a aquellas qu se encuentren lejos de la meta.
-            if (d >= 8) distanciaAuxiliar += 500*d;
-            else distanciaAuxiliar -= 15000;
-            
+                                if (current_pieces[l] == piezaADV) distanciaAuxiliarAd -= 10000;
+                            }
+                    }
+
+                } 
+                
+            }
         }
 
         distanciaAcumulada += 1000*distanciaAuxiliar;
