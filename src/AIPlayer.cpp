@@ -427,6 +427,8 @@ double AIPlayer::heuristica2(const Parchis &juego, int jugador){
     int adversario = (jugador+1)%2;
     vector<color> colorinchisYO = juego.getPlayerColors(jugador);
     vector<color> colorinchisAdversario = juego.getPlayerColors(adversario);
+    // Vector que almacenará los ids de las fichas que se pueden mover para el dado elegido.
+    vector<tuple<color, int>> current_pieces;
 
     // Beneficio y perjuicio de las fichas del jugador (YO)
     for (int i = 0; i < colorinchisYO.size(); i++){
@@ -437,18 +439,34 @@ double AIPlayer::heuristica2(const Parchis &juego, int jugador){
         for (int j = 0; j < num_pieces; j++){
 
             Box casillaYO = juego.getBoard().getPiece(colorinchisYO[i],j).get_box();
+            tuple<color, int> pieza = {casillaYO.col, casillaYO.num};
+            vector<int> dados_especiales = juego.getAvailableSpecialDices(jugador);
 
             // Beneficiamos en valor a las fichas que estén en casillas seguras
             if (juego.isSafeBox(casillaYO)) distanciaAuxiliar += 8000;
-            else{
+            // Si el jugador tiene dados especiales. 
+            else if (!dados_especiales.empty()){
 
-                double d = juego.distanceToGoal(colorinchisYO[i],j);
+                for (int k = 0; k < dados_especiales.size(); k++){
 
-                // Beneficiamos a las fichas que se encuentren en casillas próximas a la meta
-                // Castigamos a aquellas qu se encuentren lejos de la meta.
-                if (d >= 8) distanciaAuxiliar -= 500*d;
-                else distanciaAuxiliar += 7000;
-            }
+                    current_pieces = juego.getAvailablePieces(jugador,dados_especiales[k]);
+                    if (!current_pieces.empty())
+
+                        for (int l = 0; l < current_pieces.size(); l++){
+
+                            if (current_pieces[l] == pieza) distanciaAuxiliar += 10000;
+                        }
+                }
+
+            } 
+
+            double d = juego.distanceToGoal(colorinchisYO[i],j);
+
+            // Beneficiamos a las fichas que se encuentren en casillas próximas a la meta
+            // Castigamos a aquellas qu se encuentren lejos de la meta.
+            if (d >= 8) distanciaAuxiliar -= 500*d;
+            else distanciaAuxiliar += 15000;
+        
         }
 
         distanciaAcumulada += 1000*distanciaAuxiliar;
@@ -457,24 +475,47 @@ double AIPlayer::heuristica2(const Parchis &juego, int jugador){
     // Beneficio y perjuicio de las fichas del adversario 
     for (int i = 0; i < colorinchisAdversario.size(); i++){
 
+
         // Beneficiamos en valor a las fichas que estén en casa
         distanciaAuxiliarAd += 15000*juego.piecesAtHome(colorinchisAdversario[i]);
 
         for (int j = 0; j < num_pieces; j++){
 
             Box casillaADV = juego.getBoard().getPiece(colorinchisAdversario[i],j).get_box();
+            tuple<color, int> piezaADV = {casillaADV.col, casillaADV.num};
+            vector<int> dados_especialesADV = juego.getAvailableSpecialDices(adversario);
+
+            // Perjudicamos en valor a las fichas que estén en casillas seguras
+            if (juego.isSafeBox(casillaADV)) distanciaAuxiliarAd -= 8000;
+            // Si el jugador tiene dados especiales. 
+            else if (!dados_especialesADV.empty()){
+
+                for (int k = 0; k < dados_especialesADV.size(); k++){
+
+                    current_pieces = juego.getAvailablePieces(adversario,dados_especialesADV[k]);
+                    if (!current_pieces.empty())
+
+                        for (int l = 0; l < current_pieces.size(); l++){
+
+                            if (current_pieces[l] == piezaADV) distanciaAuxiliarAd -= 10000;
+                        }
+                }
+
+            } 
             double d = juego.distanceToGoal(colorinchisAdversario[i],j);
 
             // Castigamos a las fichas que se encuentren en casillas próximas a la meta
             // Beneficiamos a aquellas qu se encuentren lejos de la meta.
-            if (d >= 8) distanciaAuxiliarAd += 5000*d;
-            else distanciaAuxiliarAd -= 1000;
+            if (d >= 8) distanciaAuxiliar += 500*d;
+            else distanciaAuxiliar -= 15000;
             
         }
 
-        distanciaAcumulada += 1000*distanciaAuxiliarAd;
-    }  
+        distanciaAcumulada += 1000*distanciaAuxiliar;
+
+    }
 
     return distanciaAcumulada;
+
 }
 
